@@ -21,7 +21,8 @@ class AppUser {
   final DateTime updatedAt;
   final String? approvedBy;
 
-  bool get isOwner => role == 'owner';
+  bool get isAdmin => role == 'owner';
+  bool get isOwner => isAdmin; // kept for internal compatibility
   bool get isEmployee => role == 'employee';
   bool get isTechnician => role == 'technician';
   bool get isApproved => status == 'approved';

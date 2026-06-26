@@ -10,12 +10,7 @@ class AppRoutes {
   static const String customers = '/customers';
   static const String customerForm = '/customer-form';
   static const String customerDetail = '/customer-detail';
-  static const String installations = '/installations';
-  static const String installationForm = '/installation-form';
-  static const String services = '/services';
-  static const String serviceForm = '/service-form';
-  static const String serviceDetail = '/service-detail';
   static const String userManagement = '/user-management';
-  static const String auditLogs = '/audit-logs';
+  static const String manageCities = '/manage-cities';
   static const String settings = '/settings';
 }

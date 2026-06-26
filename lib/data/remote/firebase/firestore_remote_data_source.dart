@@ -141,15 +141,27 @@ class FirestoreRemoteDataSource {
     return collection(path).doc(documentId).delete();
   }
 
-  Future<List<Map<String, dynamic>>> fetchAuditLogs() async {
+  Future<List<String>> fetchCities() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await collection(AppConstants.auditLogsCollection)
-            .orderBy('createdAt', descending: true)
-            .limit(100)
-            .get();
+        await collection(AppConstants.citiesCollection).orderBy('name').get();
     return snapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => _normalizeMap(doc.data()))
+        .map((doc) => doc.data()['name'] as String? ?? '')
+        .where((name) => name.isNotEmpty)
         .toList();
+  }
+
+  Future<void> saveCity(String cityName) {
+    final String normalized = cityName.trim();
+    if (normalized.isEmpty) return Future.value();
+    final String docId = normalized.toLowerCase().replaceAll(' ', '_');
+    return collection(AppConstants.citiesCollection)
+        .doc(docId)
+        .set(<String, dynamic>{'name': normalized}, SetOptions(merge: true));
+  }
+
+  Future<void> deleteCity(String cityName) {
+    final String docId = cityName.trim().toLowerCase().replaceAll(' ', '_');
+    return collection(AppConstants.citiesCollection).doc(docId).delete();
   }
 
   Map<String, dynamic> _normalizeMap(Map<String, dynamic> value) {

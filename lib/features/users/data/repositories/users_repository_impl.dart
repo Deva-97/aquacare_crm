@@ -1,12 +1,8 @@
-import 'dart:convert';
-
 import 'package:get/get.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/sync/app_data_refresh_service.dart';
 import '../../../../data/remote/firebase/firestore_remote_data_source.dart';
-import '../../../dashboard/domain/entities/audit_log.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/users_repository.dart';
 
@@ -14,7 +10,6 @@ class UsersRepositoryImpl implements UsersRepository {
   UsersRepositoryImpl(this._remote);
 
   final FirestoreRemoteDataSource _remote;
-  final Uuid _uuid = const Uuid();
 
   @override
   Future<List<AppUser>> getPendingUsers() async {
@@ -29,9 +24,7 @@ class UsersRepositoryImpl implements UsersRepository {
   @override
   Future<AppUser?> getUserById(String uid) async {
     final Map<String, dynamic>? data = await _remote.getUser(uid);
-    if (data == null) {
-      return null;
-    }
+    if (data == null) return null;
     return AppUser.fromMap(data);
   }
 
@@ -39,9 +32,8 @@ class UsersRepositoryImpl implements UsersRepository {
   Future<List<AppUser>> getUsers() async {
     final List<Map<String, dynamic>> data = await _remote.getUsers();
     final List<AppUser> users = data.map(AppUser.fromMap).toList();
-    users.sort((AppUser a, AppUser b) {
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
+    users.sort((AppUser a, AppUser b) =>
+        a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return users;
   }
 
@@ -64,25 +56,8 @@ class UsersRepositoryImpl implements UsersRepository {
   Future<void> updateUser(AppUser user, {String? actorId}) async {
     final AppUser prepared = user.copyWith(updatedAt: DateTime.now());
     await _remote.setUser(prepared.uid, prepared.toMap());
-    if (actorId != null) {
-      final AuditLog log = AuditLog(
-        id: _uuid.v4(),
-        action: 'user_updated',
-        entityType: AppConstants.usersCollection,
-        entityId: prepared.uid,
-        performedBy: actorId,
-        oldValue: '',
-        newValue: jsonEncode(prepared.toMap()),
-        createdAt: DateTime.now(),
-      );
-      await _remote.upsertDocument(
-        AppConstants.auditLogsCollection,
-        log.id,
-        log.toMap(),
-      );
-      if (Get.isRegistered<AppDataRefreshService>()) {
-        Get.find<AppDataRefreshService>().notifyAuditLogsChanged();
-      }
+    if (Get.isRegistered<AppDataRefreshService>()) {
+      Get.find<AppDataRefreshService>().notifyCustomersChanged();
     }
   }
 }

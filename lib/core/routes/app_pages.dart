@@ -7,33 +7,19 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/waiting_approval_page.dart';
 import '../notifications/approval_notification_service.dart';
 import '../../features/customers/domain/usecases/customers_usecases.dart';
-import '../../features/contacts/domain/usecases/export_all_customers_to_contacts_usecase.dart';
-import '../../features/contacts/domain/usecases/export_customer_to_contacts_usecase.dart';
 import '../../features/customers/presentation/controllers/customer_form_controller.dart';
-import '../../features/customers/presentation/controllers/customer_details_controller.dart';
 import '../../features/customers/presentation/controllers/customers_controller.dart';
 import '../../features/customers/presentation/pages/customer_detail_page.dart';
 import '../../features/customers/presentation/pages/customer_form_page.dart';
 import '../../features/customers/presentation/pages/customers_page.dart';
-import '../../features/dashboard/domain/usecases/get_audit_logs_usecase.dart';
 import '../../features/dashboard/domain/usecases/get_dashboard_summary_usecase.dart';
-import '../../features/dashboard/presentation/controllers/audit_logs_controller.dart';
 import '../../features/dashboard/presentation/controllers/dashboard_controller.dart';
-import '../../features/dashboard/presentation/pages/audit_logs_page.dart';
 import '../../features/dashboard/presentation/pages/employee_dashboard_page.dart';
 import '../../features/dashboard/presentation/pages/owner_dashboard_page.dart';
 import '../../features/dashboard/presentation/pages/technician_dashboard_page.dart';
-import '../../features/installations/domain/usecases/installations_usecases.dart';
-import '../../features/installations/presentation/controllers/installation_form_controller.dart';
-import '../../features/installations/presentation/controllers/installations_controller.dart';
-import '../../features/installations/presentation/pages/installation_form_page.dart';
-import '../../features/installations/presentation/pages/installations_page.dart';
-import '../../features/services/domain/usecases/services_usecases.dart';
-import '../../features/services/presentation/controllers/service_form_controller.dart';
-import '../../features/services/presentation/controllers/services_controller.dart';
-import '../../features/services/presentation/pages/service_detail_page.dart';
-import '../../features/services/presentation/pages/service_form_page.dart';
-import '../../features/services/presentation/pages/services_page.dart';
+import '../../features/contacts/domain/usecases/export_all_customers_to_contacts_usecase.dart';
+import '../../features/customers/presentation/controllers/manage_cities_controller.dart';
+import '../../features/customers/presentation/pages/manage_cities_page.dart';
 import '../../features/settings/presentation/controllers/settings_controller.dart';
 import '../../features/settings/presentation/pages/settings_screen.dart';
 import '../../features/users/domain/usecases/users_usecases.dart';
@@ -120,21 +106,6 @@ class AppPages {
     GetPage(
       name: AppRoutes.customerDetail,
       page: CustomerDetailPage.new,
-      binding: BindingsBuilder(() {
-        Get.lazyPut<InstallationsController>(
-          () => InstallationsController(
-            Get.find<GetInstallationsUseCase>(),
-            Get.find<AuthController>(),
-          ),
-          fenix: true,
-        );
-        Get.lazyPut<CustomerDetailsController>(
-          () => CustomerDetailsController(
-            Get.find<ExportCustomerToContactsUseCase>(),
-            Get.find<AuthController>(),
-          ),
-        );
-      }),
     ),
     GetPage(
       name: AppRoutes.customerForm,
@@ -143,66 +114,9 @@ class AppPages {
         Get.lazyPut<CustomerFormController>(
           () => CustomerFormController(
             Get.find<SaveCustomerUseCase>(),
-            Get.find<CheckDuplicateCustomerUseCase>(),
+            Get.find<CheckDuplicateMobileUseCase>(),
             Get.find<FindSameNameCustomersUseCase>(),
-            Get.find<ExportCustomerToContactsUseCase>(),
-            Get.find<GetUsersUseCase>(),
-            Get.find<AuthController>(),
-          ),
-        );
-      }),
-    ),
-    GetPage(
-      name: AppRoutes.installations,
-      page: InstallationsPage.new,
-      binding: BindingsBuilder(() {
-        Get.lazyPut<InstallationsController>(
-          () => InstallationsController(
-            Get.find<GetInstallationsUseCase>(),
-            Get.find<AuthController>(),
-          ),
-          fenix: true,
-        );
-      }),
-    ),
-    GetPage(
-      name: AppRoutes.installationForm,
-      page: InstallationFormPage.new,
-      binding: BindingsBuilder(() {
-        Get.lazyPut<InstallationFormController>(
-          () => InstallationFormController(
-            Get.find<SaveInstallationUseCase>(),
-            Get.find<GetCustomersUseCase>(),
-            Get.find<AuthController>(),
-          ),
-        );
-      }),
-    ),
-    GetPage(
-      name: AppRoutes.services,
-      page: ServicesPage.new,
-      binding: BindingsBuilder(() {
-        Get.lazyPut<ServicesController>(
-          () => ServicesController(
-            Get.find<GetServicesUseCase>(),
-            Get.find<AuthController>(),
-          ),
-          fenix: true,
-        );
-      }),
-    ),
-    GetPage(name: AppRoutes.serviceDetail, page: ServiceDetailPage.new),
-    GetPage(
-      name: AppRoutes.serviceForm,
-      page: ServiceFormPage.new,
-      binding: BindingsBuilder(() {
-        Get.lazyPut<ServiceFormController>(
-          () => ServiceFormController(
-            Get.find<SaveServiceUseCase>(),
-            Get.find<UpdateTechnicianServiceUseCase>(),
-            Get.find<GetCustomersUseCase>(),
-            Get.find<GetInstallationsUseCase>(),
-            Get.find<GetUsersUseCase>(),
+            Get.find<GetCitiesUseCase>(),
             Get.find<AuthController>(),
           ),
         );
@@ -225,12 +139,15 @@ class AppPages {
       }),
     ),
     GetPage(
-      name: AppRoutes.auditLogs,
-      page: AuditLogsPage.new,
+      name: AppRoutes.manageCities,
+      page: ManageCitiesPage.new,
       binding: BindingsBuilder(() {
-        Get.lazyPut<AuditLogsController>(
-          () => AuditLogsController(Get.find<GetAuditLogsUseCase>()),
-          fenix: true,
+        Get.lazyPut<ManageCitiesController>(
+          () => ManageCitiesController(
+            Get.find<GetCitiesUseCase>(),
+            Get.find<SaveCityUseCase>(),
+            Get.find<DeleteCityUseCase>(),
+          ),
         );
       }),
     ),

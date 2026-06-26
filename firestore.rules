@@ -112,6 +112,11 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
+    match /cities/{cityId} {
+      allow read: if isApproved();
+      allow write: if isOwner();
+    }
+
     match /audit_logs/{logId} {
       allow read, write: if isOwner();
     }

@@ -174,13 +174,8 @@ class AuthController extends GetxController {
             AppRoutes.customers,
             AppRoutes.customerForm,
             AppRoutes.customerDetail,
-            AppRoutes.installations,
-            AppRoutes.installationForm,
-            AppRoutes.services,
-            AppRoutes.serviceForm,
-            AppRoutes.serviceDetail,
             AppRoutes.userManagement,
-            AppRoutes.auditLogs,
+            AppRoutes.manageCities,
             AppRoutes.settings,
           }
         : user.isEmployee
@@ -189,13 +184,11 @@ class AuthController extends GetxController {
             AppRoutes.customers,
             AppRoutes.customerForm,
             AppRoutes.customerDetail,
-            AppRoutes.installations,
-            AppRoutes.installationForm,
           }
         : <String>{
             AppRoutes.technicianDashboard,
-            AppRoutes.services,
-            AppRoutes.serviceDetail,
+            AppRoutes.customers,
+            AppRoutes.customerDetail,
           };
 
     return allowedRoutes.contains(currentRoute);

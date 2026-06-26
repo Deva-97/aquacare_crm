@@ -11,7 +11,7 @@ class SettingsScreen extends GetView<SettingsController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Settings',
+      title: 'Export to Contacts',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[

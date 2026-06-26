@@ -31,16 +31,30 @@ class _UserManagementPageState extends State<UserManagementPage>
     super.dispose();
   }
 
+  String _roleLabel(String role) {
+    switch (role) {
+      case AppConstants.ownerRole:
+        return 'Admin';
+      case AppConstants.employeeRole:
+        return 'Employee';
+      case AppConstants.technicianRole:
+        return 'Technician';
+      default:
+        return role;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AppScaffold(
-      title: 'User Approval & Roles',
+      title: 'Users & Roles',
       body: Column(
         children: <Widget>[
           TabBar(
             controller: _tabController,
             tabs: const <Widget>[
-              Tab(text: 'Pending'),
+              Tab(text: 'Pending Approval'),
               Tab(text: 'All Users'),
             ],
           ),
@@ -48,6 +62,7 @@ class _UserManagementPageState extends State<UserManagementPage>
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
+                // ── Pending tab ──────────────────────────────────────────
                 Obx(() {
                   if (controller.isLoading.value) {
                     return const Center(child: CircularProgressIndicator());
@@ -55,14 +70,14 @@ class _UserManagementPageState extends State<UserManagementPage>
                   if (controller.pendingUsers.isEmpty) {
                     return const EmptyStateView(
                       title: 'No pending approvals',
-                      message: 'New sign-ins waiting for owner approval will show here.',
+                      message: 'New sign-ins waiting for admin approval will appear here.',
                     );
                   }
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     itemCount: controller.pendingUsers.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (BuildContext context, int index) {
+                    itemBuilder: (_, int index) {
                       final user = controller.pendingUsers[index];
                       return Card(
                         child: Padding(
@@ -70,37 +85,42 @@ class _UserManagementPageState extends State<UserManagementPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text(user.name.isEmpty ? user.email : user.name),
-                              const SizedBox(height: 4),
-                              Text(user.email),
-                              const SizedBox(height: 12),
+                              Text(
+                                user.name.isEmpty ? user.email : user.name,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(user.email,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  )),
+                              const SizedBox(height: 14),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: <Widget>[
-                                  ElevatedButton(
+                                  FilledButton(
                                     onPressed: () => controller.approve(
-                                      user,
-                                      AppConstants.employeeRole,
-                                    ),
+                                        user, AppConstants.employeeRole),
                                     child: const Text('Approve as Employee'),
                                   ),
-                                  ElevatedButton(
+                                  FilledButton(
                                     onPressed: () => controller.approve(
-                                      user,
-                                      AppConstants.technicianRole,
-                                    ),
+                                        user, AppConstants.technicianRole),
                                     child: const Text('Approve as Technician'),
                                   ),
-                                  ElevatedButton(
+                                  FilledButton(
                                     onPressed: () => controller.approve(
-                                      user,
-                                      AppConstants.ownerRole,
-                                    ),
-                                    child: const Text('Approve as Owner'),
+                                        user, AppConstants.ownerRole),
+                                    child: const Text('Approve as Admin'),
                                   ),
                                   OutlinedButton(
                                     onPressed: () => controller.blockUser(user),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          theme.colorScheme.error,
+                                    ),
                                     child: const Text('Decline'),
                                   ),
                                 ],
@@ -112,6 +132,8 @@ class _UserManagementPageState extends State<UserManagementPage>
                     },
                   );
                 }),
+
+                // ── All Users tab ─────────────────────────────────────────
                 Obx(() {
                   if (controller.isLoading.value) {
                     return const Center(child: CircularProgressIndicator());
@@ -126,16 +148,34 @@ class _UserManagementPageState extends State<UserManagementPage>
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     itemCount: controller.users.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (BuildContext context, int index) {
+                    itemBuilder: (_, int index) {
                       final user = controller.users[index];
-                      final bool isBlocked = user.status == AppConstants.blockedStatus;
+                      final bool isBlocked =
+                          user.status == AppConstants.blockedStatus;
                       return Card(
                         child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          title: Text(user.name.isEmpty ? user.email : user.name),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          title: Text(
+                            user.name.isEmpty ? user.email : user.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text('${user.email}\n${user.role} - ${user.status}'),
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(user.email),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: <Widget>[
+                                    _RoleChip(_roleLabel(user.role)),
+                                    const SizedBox(width: 6),
+                                    _StatusChip(user.status, isBlocked),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                           isThreeLine: true,
                           trailing: PopupMenuButton<String>(
@@ -151,19 +191,26 @@ class _UserManagementPageState extends State<UserManagementPage>
                             itemBuilder: (_) => <PopupMenuEntry<String>>[
                               const PopupMenuItem(
                                 value: AppConstants.ownerRole,
-                                child: Text('Make owner'),
+                                child: Text('Make Admin'),
                               ),
                               const PopupMenuItem(
                                 value: AppConstants.employeeRole,
-                                child: Text('Make employee'),
+                                child: Text('Make Employee'),
                               ),
                               const PopupMenuItem(
                                 value: AppConstants.technicianRole,
-                                child: Text('Make technician'),
+                                child: Text('Make Technician'),
                               ),
+                              const PopupMenuDivider(),
                               PopupMenuItem(
                                 value: isBlocked ? 'unblock' : 'block',
-                                child: Text(isBlocked ? 'Unblock user' : 'Block user'),
+                                child: Text(
+                                  isBlocked ? 'Unblock' : 'Block',
+                                  style: TextStyle(
+                                      color: isBlocked
+                                          ? null
+                                          : theme.colorScheme.error),
+                                ),
                               ),
                             ],
                           ),
@@ -176,6 +223,59 @@ class _UserManagementPageState extends State<UserManagementPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  const _RoleChip(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip(this.status, this.isBlocked);
+  final String status;
+  final bool isBlocked;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isBlocked
+        ? Theme.of(context).colorScheme.errorContainer
+        : Theme.of(context).colorScheme.primaryContainer;
+    final textColor = isBlocked
+        ? Theme.of(context).colorScheme.onErrorContainer
+        : Theme.of(context).colorScheme.onPrimaryContainer;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

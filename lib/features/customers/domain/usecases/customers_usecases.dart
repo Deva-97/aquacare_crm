@@ -6,10 +6,7 @@ class GetCustomersUseCase {
   GetCustomersUseCase(this._repository);
   final CustomersRepository _repository;
 
-  Future<List<Customer>> call(
-    AppUser currentUser, {
-    String query = '',
-  }) {
+  Future<List<Customer>> call(AppUser currentUser, {String query = ''}) {
     return _repository.getCustomers(currentUser, query: query);
   }
 }
@@ -39,20 +36,12 @@ class DeleteCustomerUseCase {
   }
 }
 
-class CheckDuplicateCustomerUseCase {
-  CheckDuplicateCustomerUseCase(this._repository);
+class CheckDuplicateMobileUseCase {
+  CheckDuplicateMobileUseCase(this._repository);
   final CustomersRepository _repository;
 
-  Future<bool> call({
-    required String mobileNumber,
-    required String whatsappNumber,
-    String? excludingId,
-  }) {
-    return _repository.hasDuplicate(
-      mobileNumber: mobileNumber,
-      whatsappNumber: whatsappNumber,
-      excludingId: excludingId,
-    );
+  Future<bool> call({required String mobileNumber, String? excludingId}) {
+    return _repository.hasDuplicate(mobileNumber: mobileNumber, excludingId: excludingId);
   }
 }
 
@@ -63,4 +52,25 @@ class FindSameNameCustomersUseCase {
   Future<List<Customer>> call(String name, {String? excludingId}) {
     return _repository.findByName(name, excludingId: excludingId);
   }
+}
+
+class GetCitiesUseCase {
+  GetCitiesUseCase(this._repository);
+  final CustomersRepository _repository;
+
+  Future<List<String>> call() => _repository.getCities();
+}
+
+class SaveCityUseCase {
+  SaveCityUseCase(this._repository);
+  final CustomersRepository _repository;
+
+  Future<void> call(String cityName) => _repository.saveCity(cityName);
+}
+
+class DeleteCityUseCase {
+  DeleteCityUseCase(this._repository);
+  final CustomersRepository _repository;
+
+  Future<void> call(String cityName) => _repository.deleteCity(cityName);
 }

@@ -18,27 +18,15 @@ class CustomersRepositoryImpl implements CustomersRepository {
     if (!actor.isOwner) {
       throw AppException('Only owners can delete customers.');
     }
-    final Customer deleted = customer.copyWith(
-      isDeleted: true,
-      updatedAt: DateTime.now(),
-    );
-    await _remote.upsertDocument(
-      AppConstants.customersCollection,
-      deleted.id,
-      deleted.toMap(),
-    );
+    final Customer deleted = customer.copyWith(isDeleted: true, updatedAt: DateTime.now());
+    await _remote.upsertDocument(AppConstants.customersCollection, deleted.id, deleted.toMap());
     _notifyCustomersChanged();
   }
 
   @override
   Future<Customer?> getCustomerById(String id) async {
-    final Map<String, dynamic>? data = await _remote.fetchDocument(
-      AppConstants.customersCollection,
-      id,
-    );
-    if (data == null) {
-      return null;
-    }
+    final Map<String, dynamic>? data = await _remote.fetchDocument(AppConstants.customersCollection, id);
+    if (data == null) return null;
     final Customer customer = Customer.fromMap(data);
     return customer.isDeleted ? null : customer;
   }
@@ -46,18 +34,13 @@ class CustomersRepositoryImpl implements CustomersRepository {
   @override
   Future<List<Customer>> getCustomers(AppUser currentUser, {String query = ''}) async {
     final List<Customer> customers = await _fetchVisibleCustomers(currentUser);
-    final String normalizedQuery = query.trim().toLowerCase();
-    if (normalizedQuery.isEmpty) {
-      return customers;
-    }
-
-    final Set<String> matchingSerialCustomerIds = await _customerIdsMatchingSerial(normalizedQuery);
-    return customers.where((Customer customer) {
-      return customer.customerName.toLowerCase().contains(normalizedQuery) ||
-          customer.mobileNumber.contains(normalizedQuery) ||
-          customer.whatsappNumber.contains(normalizedQuery) ||
-          customer.area.toLowerCase().contains(normalizedQuery) ||
-          matchingSerialCustomerIds.contains(customer.id);
+    final String q = query.trim().toLowerCase();
+    if (q.isEmpty) return customers;
+    return customers.where((Customer c) {
+      return c.customerName.toLowerCase().contains(q) ||
+          c.mobileNumber.contains(q) ||
+          c.city.toLowerCase().contains(q) ||
+          c.pincode.contains(q);
     }).toList();
   }
 
@@ -76,48 +59,39 @@ class CustomersRepositoryImpl implements CustomersRepository {
   }
 
   @override
-  Future<bool> hasDuplicate({
-    required String mobileNumber,
-    required String whatsappNumber,
-    String? excludingId,
-  }) async {
-    final List<Map<String, dynamic>> all =
-        await _remote.fetchCollection(AppConstants.customersCollection);
+  Future<bool> hasDuplicate({required String mobileNumber, String? excludingId}) async {
     final String mobile = mobileNumber.trim();
-    final String whatsapp = whatsappNumber.trim();
-    return all.map(Customer.fromMap).where((Customer c) {
-      return !c.isDeleted && c.id != excludingId;
-    }).any((Customer c) {
-      return c.mobileNumber == mobile ||
-          c.whatsappNumber == whatsapp ||
-          c.mobileNumber == whatsapp ||
-          c.whatsappNumber == mobile;
-    });
+    if (mobile.isEmpty) return false;
+    final List<Map<String, dynamic>> results = await _remote.fetchWhereEquals(
+      path: AppConstants.customersCollection,
+      field: 'mobileNumber',
+      value: mobile,
+    );
+    return results.any((item) => item['isDeleted'] != true && item['id'] != excludingId);
   }
 
   @override
   Future<void> saveCustomer(Customer customer, AppUser actor, {bool isUpdate = false}) async {
     final bool duplicate = await hasDuplicate(
       mobileNumber: customer.mobileNumber,
-      whatsappNumber: customer.whatsappNumber,
       excludingId: isUpdate ? customer.id : null,
     );
     if (duplicate) {
-      throw AppException('Another active customer already uses that mobile or WhatsApp number.');
+      throw AppException('This mobile number is already registered to another customer.');
     }
-
-    if (!actor.isOwner && isUpdate && customer.createdBy != actor.uid && customer.assignedEmployeeId != actor.uid) {
-      throw AppException('You do not have permission to edit this customer.');
-    }
-
     final Customer prepared = customer.copyWith(updatedAt: DateTime.now());
-    await _remote.upsertDocument(
-      AppConstants.customersCollection,
-      prepared.id,
-      prepared.toMap(),
-    );
+    await _remote.upsertDocument(AppConstants.customersCollection, prepared.id, prepared.toMap());
     _notifyCustomersChanged();
   }
+
+  @override
+  Future<List<String>> getCities() => _remote.fetchCities();
+
+  @override
+  Future<void> saveCity(String cityName) => _remote.saveCity(cityName);
+
+  @override
+  Future<void> deleteCity(String cityName) => _remote.deleteCity(cityName);
 
   void _notifyCustomersChanged() {
     if (Get.isRegistered<AppDataRefreshService>()) {
@@ -135,39 +109,15 @@ class CustomersRepositoryImpl implements CustomersRepository {
         field: 'createdBy',
         value: currentUser.uid,
       );
-      final List<Map<String, dynamic>> assigned = await _remote.fetchWhereEquals(
-        path: AppConstants.customersCollection,
-        field: 'assignedEmployeeId',
-        value: currentUser.uid,
-      );
       final Map<String, Map<String, dynamic>> merged = <String, Map<String, dynamic>>{};
-      for (final Map<String, dynamic> item in <Map<String, dynamic>>[...created, ...assigned]) {
+      for (final Map<String, dynamic> item in created) {
         merged[item['id'] as String] = item;
       }
       data = merged.values.toList();
     }
-    final List<Customer> customers = data
-        .map(Customer.fromMap)
-        .where((Customer c) => !c.isDeleted)
-        .toList();
+    final List<Customer> customers =
+        data.map(Customer.fromMap).where((Customer c) => !c.isDeleted).toList();
     customers.sort((Customer a, Customer b) => b.updatedAt.compareTo(a.updatedAt));
     return customers;
-  }
-
-  Future<Set<String>> _customerIdsMatchingSerial(String normalizedQuery) async {
-    final List<Map<String, dynamic>> installations =
-        await _remote.fetchCollection(AppConstants.installationsCollection);
-    return installations
-        .map((Map<String, dynamic> item) {
-          final bool isDeleted = item['isDeleted'] == true || item['isDeleted'] == 1;
-          final String serialNumber =
-              (item['serialNumber'] as String? ?? '').toLowerCase();
-          if (isDeleted || !serialNumber.contains(normalizedQuery)) {
-            return null;
-          }
-          return item['customerId'] as String?;
-        })
-        .whereType<String>()
-        .toSet();
   }
 }
