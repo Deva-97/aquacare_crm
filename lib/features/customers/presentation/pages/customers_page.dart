@@ -16,6 +16,8 @@ class CustomersPage extends GetView<CustomersController> {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
     final bool isTechnician = auth.currentUser.value?.isTechnician == true;
+    final bool isOwner = auth.currentUser.value?.isOwner == true;
+    final String? currentUid = auth.currentUser.value?.uid;
     return AppScaffold(
       title: 'Customers',
       floatingActionButton: isTechnician
@@ -59,8 +61,8 @@ class CustomersPage extends GetView<CustomersController> {
                     final Customer c = controller.customers[index];
                     return _CustomerCard(
                       customer: c,
-                      canEdit: !isTechnician,
-                      canDelete: auth.currentUser.value?.isOwner == true,
+                      canEdit: isOwner || (!isTechnician && c.createdBy == currentUid),
+                      canDelete: isOwner,
                       onEdit: () async {
                         final result = await Get.toNamed(AppRoutes.customerForm, arguments: c);
                         if (result == true) controller.loadCustomers();

@@ -76,11 +76,7 @@ service cloud.firestore {
     }
 
     match /customers/{customerId} {
-      allow read: if isOwner()
-        || (isEmployee() && (
-          resource.data.createdBy == request.auth.uid ||
-          resource.data.assignedEmployeeId == request.auth.uid
-        ));
+      allow read: if isOwner() || isTechnician() || isEmployee();
       allow create: if isOwner() || isEmployee();
       allow update: if isOwner()
         || (isEmployee()
@@ -114,7 +110,7 @@ service cloud.firestore {
 
     match /cities/{cityId} {
       allow read: if isApproved();
-      allow write: if isOwner();
+      allow write: if isOwner() || isEmployee() || isTechnician();
     }
 
     match /audit_logs/{logId} {

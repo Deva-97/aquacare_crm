@@ -15,7 +15,7 @@ class ManageCitiesPage extends GetView<ManageCitiesController> {
       title: 'Manage Cities',
       body: Column(
         children: <Widget>[
-          // ── Add city bar ────────────────────────────────────────────────
+          // ── Search / add city bar ───────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             color: theme.colorScheme.surface,
@@ -26,23 +26,32 @@ class ManageCitiesPage extends GetView<ManageCitiesController> {
                     controller: controller.addController,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
-                      hintText: 'Enter city name',
-                      prefixIcon: const Icon(Icons.location_city_outlined),
+                      hintText: 'Search or add a city',
+                      prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
+                    onChanged: controller.onSearchChanged,
                     onSubmitted: (_) => controller.addCity(),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Obx(() => FilledButton(
-                      onPressed:
-                          controller.isLoading.value ? null : controller.addCity,
+                Obx(() {
+                  if (controller.hasExactMatch) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: FilledButton(
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : controller.addCity,
                       child: const Text('Add'),
-                    )),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -61,14 +70,22 @@ class ManageCitiesPage extends GetView<ManageCitiesController> {
                       'Add city names here. Employees will see these as a dropdown when entering customer data.',
                 );
               }
+              final List<String> filtered = controller.filteredCities;
+              if (filtered.isEmpty) {
+                return EmptyStateView(
+                  title: 'No matching cities',
+                  message:
+                      '"${controller.query.value.trim()}" isn\'t in the list yet. Tap Add to create it.',
+                );
+              }
               return RefreshIndicator(
                 onRefresh: controller.loadCities,
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                  itemCount: controller.cities.length,
+                  itemCount: filtered.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (BuildContext context, int index) {
-                    final String city = controller.cities[index];
+                    final String city = filtered[index];
                     return Card(
                       margin: EdgeInsets.zero,
                       child: ListTile(
@@ -82,11 +99,15 @@ class ManageCitiesPage extends GetView<ManageCitiesController> {
                             ),
                           ),
                         ),
-                        title: Text(city,
-                            style: const TextStyle(fontWeight: FontWeight.w500)),
+                        title: Text(
+                          city,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              color: theme.colorScheme.error),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: theme.colorScheme.error,
+                          ),
                           tooltip: 'Remove city',
                           onPressed: () => _confirmDelete(context, city),
                         ),
@@ -118,7 +139,8 @@ class ManageCitiesPage extends GetView<ManageCitiesController> {
           ),
           TextButton(
             style: TextButton.styleFrom(
-                foregroundColor: Theme.of(ctx).colorScheme.error),
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Remove'),
           ),

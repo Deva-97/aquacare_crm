@@ -184,11 +184,13 @@ class AuthController extends GetxController {
             AppRoutes.customers,
             AppRoutes.customerForm,
             AppRoutes.customerDetail,
+            AppRoutes.manageCities,
           }
         : <String>{
             AppRoutes.technicianDashboard,
             AppRoutes.customers,
             AppRoutes.customerDetail,
+            AppRoutes.manageCities,
           };
 
     return allowedRoutes.contains(currentRoute);

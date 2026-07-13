@@ -32,7 +32,7 @@ class EmployeeDashboardPage extends GetView<DashboardController> {
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           children: <Widget>[
             _GradientStatCard(
-              label: 'My Customers',
+              label: 'Customers',
               value: summary == null ? '—' : '${summary.totalCustomers}',
               icon: Icons.people_alt_outlined,
               onRefresh: controller.loadSummary,
@@ -42,10 +42,17 @@ class EmployeeDashboardPage extends GetView<DashboardController> {
             const SizedBox(height: 12),
             _ActionCard(
               label: 'Manage Customers',
-              subtitle: 'Add and manage your customer records',
+              subtitle: 'View all customers, manage the ones you added',
               icon: Icons.groups_outlined,
               iconColor: AppTheme.primary,
               onTap: () => Get.toNamed(AppRoutes.customers),
+            ),
+            _ActionCard(
+              label: 'Manage Cities',
+              subtitle: 'Add or remove cities in the dropdown',
+              icon: Icons.location_city_outlined,
+              iconColor: const Color(0xFF00838F),
+              onTap: () => Get.toNamed(AppRoutes.manageCities),
             ),
           ],
         );

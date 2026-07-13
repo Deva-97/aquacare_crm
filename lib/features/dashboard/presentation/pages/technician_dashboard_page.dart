@@ -47,6 +47,13 @@ class TechnicianDashboardPage extends GetView<DashboardController> {
               iconColor: AppTheme.primary,
               onTap: () => Get.toNamed(AppRoutes.customers),
             ),
+            _ActionCard(
+              label: 'Manage Cities',
+              subtitle: 'Add or remove cities in the dropdown',
+              icon: Icons.location_city_outlined,
+              iconColor: const Color(0xFF00838F),
+              onTap: () => Get.toNamed(AppRoutes.manageCities),
+            ),
           ],
         );
       }),

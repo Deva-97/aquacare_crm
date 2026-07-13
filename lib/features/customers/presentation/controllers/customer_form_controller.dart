@@ -28,7 +28,6 @@ class CustomerFormController extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController cityTextController = TextEditingController();
   final TextEditingController pincodeController = TextEditingController();
 
   final RxList<String> availableCities = <String>[].obs;
@@ -58,7 +57,6 @@ class CustomerFormController extends GetxController {
     nameController.text = customer.customerName;
     mobileController.text = customer.mobileNumber;
     addressController.text = customer.address;
-    cityTextController.text = customer.city;
     selectedCity.value = customer.city.isNotEmpty ? customer.city : null;
     pincodeController.text = customer.pincode;
     mobileStatus.value = 'available';
@@ -84,6 +82,28 @@ class CustomerFormController extends GetxController {
   }
 
   String get effectiveCity => selectedCity.value ?? '';
+
+  List<String> filterCities(String query) {
+    final String q = query.trim().toLowerCase();
+    if (q.isEmpty) return availableCities;
+    return availableCities.where((city) => city.toLowerCase().contains(q)).toList();
+  }
+
+  void onCitySelected(String city) => selectedCity.value = city;
+
+  void onCityTextChanged(String value) {
+    final String trimmed = value.trim();
+    selectedCity.value = availableCities.any((city) => city.toLowerCase() == trimmed.toLowerCase())
+        ? trimmed
+        : null;
+  }
+
+  String? validateCity(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return 'Please select a city';
+    final bool known = availableCities.any((city) => city.toLowerCase() == trimmed.toLowerCase());
+    return known ? null : 'Select a city from the list';
+  }
 
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
@@ -170,7 +190,6 @@ class CustomerFormController extends GetxController {
     nameController.dispose();
     mobileController.dispose();
     addressController.dispose();
-    cityTextController.dispose();
     pincodeController.dispose();
     super.onClose();
   }

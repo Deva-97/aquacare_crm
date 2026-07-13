@@ -82,17 +82,62 @@ class CustomerFormPage extends GetView<CustomerFormController> {
                   child: const SizedBox(height: 20),
                 );
               }
-              return DropdownButtonFormField<String>(
-                initialValue: controller.selectedCity.value,
-                decoration: const InputDecoration(
-                  labelText: 'City',
-                  prefixIcon: Icon(Icons.location_city_outlined),
-                ),
-                items: cities
-                    .map((city) => DropdownMenuItem<String>(value: city, child: Text(city)))
-                    .toList(),
-                onChanged: (v) => controller.selectedCity.value = v,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please select a city' : null,
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return Autocomplete<String>(
+                    initialValue: TextEditingValue(text: controller.selectedCity.value ?? ''),
+                    optionsBuilder: (TextEditingValue value) => controller.filterCities(value.text),
+                    onSelected: controller.onCitySelected,
+                    fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                      return TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(
+                          labelText: 'City',
+                          hintText: 'Search cities',
+                          prefixIcon: Icon(Icons.location_city_outlined),
+                          suffixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: controller.onCityTextChanged,
+                        validator: (v) => controller.validateCity(v),
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: constraints.maxWidth,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              child: options.isEmpty
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Text('No matching cities'),
+                                    )
+                                  : ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      shrinkWrap: true,
+                                      itemCount: options.length,
+                                      itemBuilder: (context, index) {
+                                        final String option = options.elementAt(index);
+                                        return ListTile(
+                                          dense: true,
+                                          title: Text(option),
+                                          onTap: () => onSelected(option),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               );
             }),
             const SizedBox(height: 16),

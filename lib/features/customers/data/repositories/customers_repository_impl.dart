@@ -33,7 +33,7 @@ class CustomersRepositoryImpl implements CustomersRepository {
 
   @override
   Future<List<Customer>> getCustomers(AppUser currentUser, {String query = ''}) async {
-    final List<Customer> customers = await _fetchVisibleCustomers(currentUser);
+    final List<Customer> customers = await _fetchVisibleCustomers();
     final String q = query.trim().toLowerCase();
     if (q.isEmpty) return customers;
     return customers.where((Customer c) {
@@ -99,22 +99,9 @@ class CustomersRepositoryImpl implements CustomersRepository {
     }
   }
 
-  Future<List<Customer>> _fetchVisibleCustomers(AppUser currentUser) async {
-    List<Map<String, dynamic>> data;
-    if (currentUser.isOwner) {
-      data = await _remote.fetchCollection(AppConstants.customersCollection);
-    } else {
-      final List<Map<String, dynamic>> created = await _remote.fetchWhereEquals(
-        path: AppConstants.customersCollection,
-        field: 'createdBy',
-        value: currentUser.uid,
-      );
-      final Map<String, Map<String, dynamic>> merged = <String, Map<String, dynamic>>{};
-      for (final Map<String, dynamic> item in created) {
-        merged[item['id'] as String] = item;
-      }
-      data = merged.values.toList();
-    }
+  Future<List<Customer>> _fetchVisibleCustomers() async {
+    final List<Map<String, dynamic>> data =
+        await _remote.fetchCollection(AppConstants.customersCollection);
     final List<Customer> customers =
         data.map(Customer.fromMap).where((Customer c) => !c.isDeleted).toList();
     customers.sort((Customer a, Customer b) => b.updatedAt.compareTo(a.updatedAt));

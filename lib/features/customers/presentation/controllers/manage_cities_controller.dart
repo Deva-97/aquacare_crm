@@ -13,12 +13,27 @@ class ManageCitiesController extends GetxController {
   final RxList<String> cities = <String>[].obs;
   final RxBool isLoading = false.obs;
   final TextEditingController addController = TextEditingController();
+  final RxString query = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadCities();
   }
+
+  List<String> get filteredCities {
+    final String q = query.value.trim().toLowerCase();
+    if (q.isEmpty) return cities;
+    return cities.where((c) => c.toLowerCase().contains(q)).toList();
+  }
+
+  bool get hasExactMatch {
+    final String q = query.value.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return cities.any((c) => c.toLowerCase() == q);
+  }
+
+  void onSearchChanged(String value) => query.value = value;
 
   Future<void> loadCities() async {
     isLoading.value = true;
@@ -40,6 +55,7 @@ class ManageCitiesController extends GetxController {
     try {
       await _saveCity.call(name);
       addController.clear();
+      query.value = '';
       await loadCities();
       Get.snackbar('City added', '"$name" was added successfully.');
     } catch (e) {
